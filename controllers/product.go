@@ -11,10 +11,12 @@ import (
 
 type ProductController struct{}
 
+// class function
 func NewProductController() *ProductController {
 	return &ProductController{}
 }
 
+// GET /products
 func (p *ProductController) GetAll(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
 	var products []models.Product
@@ -22,6 +24,7 @@ func (p *ProductController) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": products})
 }
 
+// POST /product
 func (p *ProductController) Create(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
 	var input models.Product
@@ -40,6 +43,7 @@ func (p *ProductController) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"data": input})
 }
 
+// PUT /product/:id
 func (p *ProductController) Update(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
 	id, _ := strconv.Atoi(ctx.Param("id"))
@@ -65,6 +69,7 @@ func (p *ProductController) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": product})
 }
 
+// DELETE /product/:id
 func (p *ProductController) Delete(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
 	id, _ := strconv.Atoi(ctx.Param("id"))
