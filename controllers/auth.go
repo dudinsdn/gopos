@@ -21,7 +21,7 @@ func NewAuthController(db *gorm.DB) *AuthController {
 	return &AuthController{db}
 }
 
-func ValidateSignupInput(user *models.User) string {
+func validateSignupInput(user *models.User) string {
 	if strings.TrimSpace(user.Name) == "" {
 		return "name is required!"
 	}
@@ -45,7 +45,7 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	if msg := ValidateSignupInput(&input); msg != "" {
+	if msg := validateSignupInput(&input); msg != "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
@@ -61,7 +61,7 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "user created"})
 }
 
-func ValidateLoginInput(user *models.User) string {
+func validateLoginInput(user *models.User) string {
 	if strings.TrimSpace(user.Email) == "" {
 		return "email is required!"
 	}
@@ -79,7 +79,7 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	if msg := ValidateLoginInput(&input); msg != "" {
+	if msg := validateLoginInput(&input); msg != "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
