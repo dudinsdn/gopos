@@ -23,10 +23,12 @@ func isValidEmail(email string) bool {
 	return rx.MatchString(email)
 }
 
+// class funciton
 func NewAuthController(db *gorm.DB) *AuthController {
 	return &AuthController{db}
 }
 
+// validate singup input
 func validateSignupInput(user *models.User) string {
 	if strings.TrimSpace(user.Name) == "" {
 		return "name is required!"
@@ -46,6 +48,7 @@ func validateSignupInput(user *models.User) string {
 	return ""
 }
 
+// POST /signup
 func (ac *AuthController) SignUp(ctx *gin.Context) {
 	var input models.User
 
@@ -88,6 +91,7 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 	})
 }
 
+// validate login input
 func validateLoginInput(user *models.User) string {
 	if strings.TrimSpace(user.Email) == "" {
 		return "email is required!"
@@ -101,6 +105,7 @@ func validateLoginInput(user *models.User) string {
 	return ""
 }
 
+// POST /login
 func (ac *AuthController) Login(ctx *gin.Context) {
 	var input models.User
 
