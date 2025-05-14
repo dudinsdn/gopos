@@ -59,6 +59,12 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 		return
 	}
 
+	var existing models.User
+	if err := ac.db.Where("email = ?", input.Email).First(&existing).Error; err != nil {
+		ctx.JSON(http.StatusConflict, gin.H{"error": "email already registered"})
+		return
+	}
+
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	input.Password = string(hashedPassword)
 
