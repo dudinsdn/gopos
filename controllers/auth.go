@@ -78,7 +78,14 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"message": "user created"})
+	ctx.JSON(http.StatusCreated, gin.H{
+		"message": "user created",
+		"user": gin.H{
+			"id":    input.ID,
+			"email": input.Email,
+			"name":  input.Name,
+		},
+	})
 }
 
 func validateLoginInput(user *models.User) string {
