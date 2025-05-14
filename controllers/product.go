@@ -19,9 +19,34 @@ func NewProductController() *ProductController {
 // GET /products
 func (p *ProductController) GetAll(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
+
+	// Query Params
+	search := ctx.Query("search")
+	pageStr := ctx.DefaultQuery("page", "1")
+	limitStr := ctx.DefaultQuery("limit", "10")
+
+	page, _ := strconv.Atoi(pageStr)
+	limit, _ := strconv.Atoi(limitStr)
+	offset := (page - 1) * limit
+
 	var products []models.Product
-	db.Find(&products)
-	ctx.JSON(http.StatusOK, gin.H{"data": products})
+	query := db.Model(&models.Product{})
+
+	// search pagination (limit default 10)
+	if search != "" {
+		query = query.Where("name ILIKE ?", "%"+search+"%")
+	}
+	query.Offset(offset).Limit(limit).Find(&products)
+
+	var total int64
+	query.Count(&total)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"data":  products,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	})
 }
 
 // POST /product
