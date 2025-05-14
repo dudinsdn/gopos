@@ -20,11 +20,11 @@ func NewAuthController(db *gorm.DB) *AuthController {
 	return &AuthController{db}
 }
 
-func (ac *AuthController) SignUp(c *gin.Context) {
+func (ac *AuthController) SignUp(ctx *gin.Context) {
 	var input models.User
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -32,30 +32,30 @@ func (ac *AuthController) SignUp(c *gin.Context) {
 	input.Password = string(hashedPassword)
 
 	if err := ac.db.Create(&input).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "user created"})
+	ctx.JSON(http.StatusCreated, gin.H{"message": "user created"})
 }
 
-func (ac *AuthController) Login(c *gin.Context) {
+func (ac *AuthController) Login(ctx *gin.Context) {
 	var input models.User
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	var user models.User
 
 	if err := ac.db.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
 
@@ -66,18 +66,18 @@ func (ac *AuthController) Login(c *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create token"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not create token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+	ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
 
-func (ac *AuthController) Profile(c *gin.Context) {
-	user, exists := c.Get("user")
+func (ac *AuthController) Profile(ctx *gin.Context) {
+	user, exists := ctx.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	ctx.JSON(http.StatusOK, gin.H{"user": user})
 }
