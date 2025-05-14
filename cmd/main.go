@@ -18,6 +18,10 @@ func main() {
 		&models.TransactionItem{},
 	)
 	r := gin.Default()
+	r.Use(func(ctx *gin.Context) {
+		ctx.Set("db", db) // global middleware
+		ctx.Next()
+	})
 	routes.SetupRoutes(r, db)
 	r.Run()
 }
