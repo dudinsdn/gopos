@@ -4,6 +4,7 @@ import (
 	"din/gopos/models"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,6 +18,11 @@ type AuthController struct {
 	db *gorm.DB
 }
 
+func isValidEmail(email string) bool {
+	rx := regexp.MustCompile(`^[a-zA-Z0-9._%%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	return rx.MatchString(email)
+}
+
 func NewAuthController(db *gorm.DB) *AuthController {
 	return &AuthController{db}
 }
@@ -27,6 +33,9 @@ func validateSignupInput(user *models.User) string {
 	}
 	if strings.TrimSpace(user.Email) == "" {
 		return "email is required!"
+	}
+	if !isValidEmail(user.Email) {
+		return "email format is invalid"
 	}
 	if strings.TrimSpace(user.Password) == "" {
 		return "password is required!"
@@ -64,6 +73,9 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 func validateLoginInput(user *models.User) string {
 	if strings.TrimSpace(user.Email) == "" {
 		return "email is required!"
+	}
+	if !isValidEmail(user.Email) {
+		return "email format is invalid"
 	}
 	if strings.TrimSpace(user.Password) == "" {
 		return "password is required!"
