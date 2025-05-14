@@ -51,6 +51,20 @@ func (p *ProductController) GetAll(ctx *gin.Context) {
 		}
 	}
 
+	// filter min_price, max_price
+	priceMinStr := ctx.Query("min_price")
+	priceMaxStr := ctx.Query("max_price")
+	if priceMinStr != "" {
+		if priceMin, err := strconv.ParseFloat(priceMinStr, 64); err == nil {
+			query = query.Where("price >= ?", priceMin)
+		}
+	}
+	if priceMaxStr != "" {
+		if priceMax, err := strconv.ParseFloat(priceMaxStr, 64); err == nil {
+			query = query.Where("price <= ?", priceMax)
+		}
+	}
+
 	// sort name and price
 	sort := ctx.DefaultQuery("sort", "id_asc")
 	switch sort {
