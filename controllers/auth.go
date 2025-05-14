@@ -4,6 +4,7 @@ import (
 	"din/gopos/models"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,11 +21,32 @@ func NewAuthController(db *gorm.DB) *AuthController {
 	return &AuthController{db}
 }
 
+func ValidateSignupInput(user *models.User) string {
+	if strings.TrimSpace(user.Name) == "" {
+		return "name is required!"
+	}
+	if strings.TrimSpace(user.Email) == "" {
+		return "email is required!"
+	}
+	if strings.TrimSpace(user.Password) == "" {
+		return "password is required!"
+	}
+	if len(user.Password) < 6 {
+		return "password must be at least 6 characters!"
+	}
+	return ""
+}
+
 func (ac *AuthController) SignUp(ctx *gin.Context) {
 	var input models.User
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if msg := ValidateSignupInput(&input); msg != "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
@@ -39,11 +61,26 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "user created"})
 }
 
+func ValidateLoginInput(user *models.User) string {
+	if strings.TrimSpace(user.Email) == "" {
+		return "email is required!"
+	}
+	if strings.TrimSpace(user.Password) == "" {
+		return "password is required!"
+	}
+	return ""
+}
+
 func (ac *AuthController) Login(ctx *gin.Context) {
 	var input models.User
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if msg := ValidateLoginInput(&input); msg != "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
