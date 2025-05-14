@@ -37,6 +37,20 @@ func (p *ProductController) GetAll(ctx *gin.Context) {
 		query = query.Where("name ILIKE ?", "%"+search+"%")
 	}
 
+	// filter by stock min / max
+	minStockStr := ctx.Query("min_stock")
+	maxStockStr := ctx.Query("max_stock")
+	if minStockStr != "" {
+		if minStock, err := strconv.Atoi(minStockStr); err == nil {
+			query = query.Where("stock >= ?", minStock)
+		}
+	}
+	if maxStockStr != "" {
+		if maxStock, err := strconv.Atoi(maxStockStr); err == nil {
+			query = query.Where("stock <= ?", maxStock)
+		}
+	}
+
 	// sort name and price
 	sort := ctx.DefaultQuery("sort", "id_asc")
 	switch sort {
