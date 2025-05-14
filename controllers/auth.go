@@ -61,6 +61,11 @@ func (ac *AuthController) SignUp(ctx *gin.Context) {
 
 	var existing models.User
 	if err := ac.db.Where("email = ?", input.Email).First(&existing).Error; err != nil {
+		if err != gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
 		ctx.JSON(http.StatusConflict, gin.H{"error": "email already registered"})
 		return
 	}
