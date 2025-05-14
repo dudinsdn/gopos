@@ -36,8 +36,27 @@ func (p *ProductController) GetAll(ctx *gin.Context) {
 	if search != "" {
 		query = query.Where("name ILIKE ?", "%"+search+"%")
 	}
+
+	// sort name and price
+	sort := ctx.DefaultQuery("sort", "id_asc")
+	switch sort {
+	case "id_desc":
+		query = query.Order("id DESC")
+	case "name_asc":
+		query = query.Order("name ASC")
+	case "name_desc":
+		query = query.Order("name DESC")
+	case "price_asc":
+		query = query.Order("price ASC")
+	case "price_desc":
+		query = query.Order("price DESC")
+	default:
+		query = query.Order("id ASC")
+	}
+
 	query.Offset(offset).Limit(limit).Find(&products)
 
+	// total products
 	var total int64
 	query.Count(&total)
 
