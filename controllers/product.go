@@ -155,3 +155,18 @@ func (p *ProductController) Delete(ctx *gin.Context) {
 	db.Delete(&product)
 	ctx.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
+
+func (p *ProductController) GetByID(ctx *gin.Context) {
+	db := ctx.MustGet("db").(*gorm.DB)
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	var product models.Product
+	if err := db.First(&product, id).Error; err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"data": product})
+}

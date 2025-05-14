@@ -21,6 +21,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		authGroup.GET("/me", auth.Profile)
 
 		authGroup.GET("/products", product.GetAll)
+		authGroup.GET("/product/:id", product.GetByID)
 		authGroup.POST("/product", product.Create)
 		authGroup.PUT("/product/:id", product.Update)
 		authGroup.DELETE("/product/:id", product.Delete)
