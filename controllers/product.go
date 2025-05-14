@@ -4,6 +4,7 @@ import (
 	"din/gopos/models"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -168,5 +169,37 @@ func (p *ProductController) GetByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 		return
 	}
+	ctx.JSON(http.StatusOK, gin.H{"data": product})
+}
+
+func (p *ProductController) Patch(ctx *gin.Context) {
+	db := ctx.MustGet("db").(*gorm.DB)
+	id, _ := strconv.Atoi(ctx.Param("id"))
+	var product models.Product
+	if err := db.First(&product, id).Error; err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+
+	var input map[string]interface{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if name, ok := input["name"].(string); ok && strings.TrimSpace(name) == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name cannot be empty"})
+		return
+	}
+	if price, ok := input["price"].(float64); ok && price <= 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "price must be greater than 0"})
+		return
+	}
+	if stock, ok := input["stock"].(float64); ok && int(stock) < 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "stock must be >= 0"})
+		return
+	}
+
+	db.Model(&product).Updates(input)
 	ctx.JSON(http.StatusOK, gin.H{"data": product})
 }
