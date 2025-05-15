@@ -26,6 +26,8 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		authGroup.PUT("/product/:id", product.Update)
 		authGroup.PATCH("/product/:id", product.Patch)
 		authGroup.DELETE("/product/:id", product.Delete)
+
+		authGroup.POST("/checkout", product.Checkout)
 	}
 
 	r.GET("/ping", func(ctx *gin.Context) {

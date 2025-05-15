@@ -16,12 +16,12 @@ type Product struct {
 }
 
 type Transaction struct {
-	ID       uint              `gorm:"primaryKey"`
-	UserID   uint              `gorm:"not null"`
-	User     User              `gorm:"foreignKey:UserID"`
-	Total    float64           `gorm:"not null"`
-	CreateAt int64             `gorm:"autoCreateTime:nano"`
-	Items    []TransactionItem `gorm:"foreignKey:TransactionID"`
+	ID        uint              `gorm:"primaryKey"`
+	UserID    uint              `gorm:"not null"`
+	User      User              `gorm:"foreignKey:UserID"`
+	Total     float64           `gorm:"not null"`
+	CreatedAt int64             `gorm:"autoCreateTime:nano"`
+	Items     []TransactionItem `gorm:"foreignKey:TransactionID"`
 }
 
 type TransactionItem struct {

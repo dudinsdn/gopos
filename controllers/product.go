@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -202,4 +203,71 @@ func (p *ProductController) Patch(ctx *gin.Context) {
 
 	db.Model(&product).Updates(input)
 	ctx.JSON(http.StatusOK, gin.H{"data": product})
+}
+
+func (p *ProductController) Checkout(ctx *gin.Context) {
+	db := ctx.MustGet("db").(*gorm.DB)
+	userRaw, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	user := userRaw.(models.User)
+
+	var input struct {
+		Items []struct {
+			ProductID uint `json:"product_id"`
+			Quantity  int  `json:"quantity"`
+		} `json:"items"`
+	}
+	if err := ctx.ShouldBindJSON(&input); err != nil || len(input.Items) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid items"})
+		return
+	}
+
+	tx := db.Begin()
+	var total float64
+	var items []models.TransactionItem
+	for _, item := range input.Items {
+		if item.Quantity <= 0 {
+			tx.Rollback()
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "quantity must be greater than 0"})
+			return
+		}
+		var product models.Product
+		if err := tx.First(&product, item.ProductID).Error; err != nil {
+			tx.Rollback()
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "product not found"})
+			return
+		}
+		if product.Stock < item.Quantity {
+			tx.Rollback()
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "insufficient stock"})
+			return
+		}
+		subtotal := float64(item.Quantity) * product.Price
+		total += subtotal
+		items = append(items, models.TransactionItem{
+			ProductID: product.ID,
+			Quantity:  item.Quantity,
+			Subtotal:  subtotal,
+		})
+		product.Stock -= item.Quantity
+		tx.Save(&product)
+	}
+
+	tran := models.Transaction{
+		UserID:    user.ID,
+		Total:     total,
+		Items:     items,
+		CreatedAt: time.Now().Unix(),
+	}
+	if err := tx.Create(&tran).Error; err != nil {
+		tx.Rollback()
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "transaction failed"})
+		return
+	}
+	tx.Commit()
+	db.Preload("Items.Product").Preload("User").First(&tran, tran.ID)
+	ctx.JSON(http.StatusCreated, gin.H{"message": "checkout success", "transaction": tran})
 }
