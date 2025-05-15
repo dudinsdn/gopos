@@ -158,6 +158,7 @@ func (p *ProductController) Delete(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
 
+// GET /product/:id
 func (p *ProductController) GetByID(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
 	id, err := strconv.Atoi(ctx.Param("id"))
@@ -173,6 +174,7 @@ func (p *ProductController) GetByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": product})
 }
 
+// PATCH /product/:id
 func (p *ProductController) Patch(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
 	id, _ := strconv.Atoi(ctx.Param("id"))
@@ -205,20 +207,43 @@ func (p *ProductController) Patch(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": product})
 }
 
+// GET /transactions
 func (p *ProductController) GetTransactions(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
+
 	userRaw, exists := ctx.Get("user")
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 	user := userRaw.(models.User)
-
 	var transactions []models.Transaction
-	db.Preload("Items.Product").Preload("User").Where("user_id = ?", user.ID).Order("created_at DESC").Find(&transactions)
+
+	// GET /transactions?start_date=1747267015&end_date=1747267055,
+	start := ctx.Query("start_date")
+	end := ctx.Query("end_date")
+	query := db.Preload("Items.Product").Preload("User").Where("user_id = ?", user.ID)
+	// logical
+	if start != "" {
+		if startUnix, err := strconv.ParseInt(start, 10, 64); err == nil {
+			query = query.Where("created_at >= ?", startUnix)
+		}
+	}
+	if end != "" {
+		if endUnix, err := strconv.ParseInt(end, 10, 64); err == nil {
+			query = query.Where("created_at <= ?", endUnix)
+		}
+	}
+
+	// execute query sort
+	query.Order("created_at DESC").Find(&transactions).Preload("User").Where("user_id = ?", user.ID).Order("created_at DESC").Find(&transactions)
+
+	// hide password value
 	for i := range transactions {
 		transactions[i].User.Password = ""
 	}
+
+	// show response
 	ctx.JSON(http.StatusOK, gin.H{"data": transactions})
 }
 
