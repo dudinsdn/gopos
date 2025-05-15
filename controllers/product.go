@@ -205,6 +205,23 @@ func (p *ProductController) Patch(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": product})
 }
 
+func (p *ProductController) GetTransactions(ctx *gin.Context) {
+	db := ctx.MustGet("db").(*gorm.DB)
+	userRaw, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	user := userRaw.(models.User)
+
+	var transactions []models.Transaction
+	db.Preload("Items.Product").Preload("User").Where("user_id = ?", user.ID).Order("created_at DESC").Find(&transactions)
+	for i := range transactions {
+		transactions[i].User.Password = ""
+	}
+	ctx.JSON(http.StatusOK, gin.H{"data": transactions})
+}
+
 func (p *ProductController) Checkout(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*gorm.DB)
 	userRaw, exists := ctx.Get("user")
@@ -277,5 +294,6 @@ func (p *ProductController) Checkout(ctx *gin.Context) {
 	}
 	tx.Commit()
 	db.Preload("Items.Product").Preload("User").First(&tran, tran.ID)
+	tran.User.Password = ""
 	ctx.JSON(http.StatusCreated, gin.H{"message": "checkout success", "transaction": tran})
 }

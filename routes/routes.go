@@ -28,6 +28,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		authGroup.DELETE("/product/:id", product.Delete)
 
 		authGroup.POST("/checkout", product.Checkout)
+		authGroup.GET("/transactions", product.GetTransactions)
 	}
 
 	r.GET("/ping", func(ctx *gin.Context) {
