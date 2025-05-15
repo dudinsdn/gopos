@@ -228,7 +228,15 @@ func (p *ProductController) Checkout(ctx *gin.Context) {
 	tx := db.Begin()
 	var total float64
 	var items []models.TransactionItem
+	productIDs := make(map[uint]bool)
 	for _, item := range input.Items {
+		if productIDs[item.ProductID] {
+			tx.Rollback()
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "duplicate product_id found"})
+			return
+		}
+		productIDs[item.ProductID] = true
+
 		if item.Quantity <= 0 {
 			tx.Rollback()
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "quantity must be greater than 0"})
